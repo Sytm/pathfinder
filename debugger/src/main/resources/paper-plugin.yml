@@ -1,0 +1,10 @@
+name: PathDebugger
+version: ${version}
+
+main: de.md5lukas.pathfinder.debugger.Debugger
+loader: de.md5lukas.pathfinder.debugger.DependencyYmlLoader
+
+api-version: ${apiVersion}
+
+commands:
+  path:

@@ -1,0 +1,6 @@
+repositories:
+  - id: paper
+    type: default
+    url: https://repo.papermc.io/repository/maven-public/
+dependencies:
+  - org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}
