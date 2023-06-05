@@ -1,7 +1,7 @@
 package de.md5lukas.pathfinder
 
 import de.md5lukas.pathfinder.world.BlockAccessor
-import de.md5lukas.pathfinder.world.PathLocation
+import de.md5lukas.pathfinder.world.BlockPosition
 import org.bukkit.block.Block
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -79,6 +79,6 @@ internal class ChunkInvalidationListener(
   }
 
   private fun Block.invalidate() {
-    accessor.invalidate(world, PathLocation.getChunkKey(x shr 4, z shr 4))
+    accessor.invalidate(world, BlockPosition.getChunkKey(x shr 4, z shr 4))
   }
 }

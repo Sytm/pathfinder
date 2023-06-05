@@ -2,7 +2,7 @@ package de.md5lukas.pathfinder.debugger
 
 import de.md5lukas.pathfinder.*
 import de.md5lukas.pathfinder.strategy.BasicPlayerPathingStrategy
-import de.md5lukas.pathfinder.world.PathLocation
+import de.md5lukas.pathfinder.world.BlockPosition
 import io.papermc.paper.math.Position
 import java.util.*
 import net.kyori.adventure.text.Component
@@ -27,11 +27,11 @@ class PathCommand(
           PathfinderOptions(
               plugin,
               { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
-              130,
               5000,
               setupChunkInvalidationListener = true,
-              heuristicWeight = 1.1,
+              heuristicWeight = 1.2,
               debugTime = 0,
+              allowIncompletePathing = false,
               pathingStrategy = BasicPlayerPathingStrategy(true, 5.0)),)
 
   private val playerStates = mutableMapOf<UUID, PlayerState>()
@@ -68,11 +68,11 @@ class PathCommand(
 
     when (args[0].lowercase()) {
       "pos1" -> {
-        playerState.pos1 = PathLocation(sender.location)
+        playerState.pos1 = BlockPosition(sender.location)
         sender.sendMessage(Component.text("Position 1 set"))
       }
       "pos2" -> {
-        playerState.pos2 = PathLocation(sender.location)
+        playerState.pos2 = BlockPosition(sender.location)
         sender.sendMessage(Component.text("Position 2 set"))
       }
       "start" -> {
@@ -99,7 +99,7 @@ class PathCommand(
                 sender.sendMultiBlockChange(map, true)
               }
               is PathFailure -> {
-                sender.sendMessage(Component.text("Pathing failed because ${it.reason}"))
+                sender.sendMessage(Component.text("Pathing failed because ${it.reason}, iterations ${it.context.iterations}"))
               }
             }
           }
@@ -126,8 +126,8 @@ class PathCommand(
   }
 
   private class PlayerState {
-    var pos1: PathLocation? = null
-    var pos2: PathLocation? = null
+    var pos1: BlockPosition? = null
+    var pos2: BlockPosition? = null
     var pathResult: PathResult? = null
   }
 }

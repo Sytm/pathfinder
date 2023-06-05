@@ -5,7 +5,7 @@ import kotlin.math.sqrt
 import org.bukkit.Location
 import org.bukkit.World
 
-class PathLocation(
+class BlockPosition(
     val x: Int,
     val y: Int,
     val z: Int,
@@ -38,7 +38,7 @@ class PathLocation(
 
   fun asBukkit() = Location(world, x.toDouble(), y.toDouble(), z.toDouble())
 
-  fun octileDistance(other: PathLocation): Double {
+  fun octileDistance(other: BlockPosition): Double {
     if (world != other.world) {
       throw IllegalArgumentException("Locations must be in the same world")
     }
@@ -57,15 +57,15 @@ class PathLocation(
 
   operator fun plus(offset: Offset) = plus(offset.x, offset.y, offset.z)
 
-  fun plus(dx: Int, dy: Int, dz: Int) = PathLocation(x + dx, y + dy, z + dz, world)
+  fun plus(dx: Int, dy: Int, dz: Int) = BlockPosition(x + dx, y + dy, z + dz, world)
 
-  operator fun minus(other: PathLocation) = Offset(x - other.x, y - other.y, z - other.z)
+  operator fun minus(other: BlockPosition) = Offset(x - other.x, y - other.y, z - other.z)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PathLocation
+    other as BlockPosition
 
     if (x != other.x) return false
     if (y != other.y) return false

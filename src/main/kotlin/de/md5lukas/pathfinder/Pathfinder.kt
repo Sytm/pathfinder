@@ -2,7 +2,7 @@ package de.md5lukas.pathfinder
 
 import de.md5lukas.pathfinder.world.BlockAccessor
 import de.md5lukas.pathfinder.world.Offset
-import de.md5lukas.pathfinder.world.PathLocation
+import de.md5lukas.pathfinder.world.BlockPosition
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import org.bukkit.Bukkit
@@ -26,9 +26,9 @@ class Pathfinder(
     listener?.let { HandlerList.unregisterAll(it) }
   }
 
-  fun findPath(start: Location, goal: Location) = findPath(PathLocation(start), PathLocation(goal))
+  fun findPath(start: Location, goal: Location) = findPath(BlockPosition(start), BlockPosition(goal))
 
-  fun findPath(start: PathLocation, goal: PathLocation): CompletableFuture<PathResult> =
+  fun findPath(start: BlockPosition, goal: BlockPosition): CompletableFuture<PathResult> =
       CompletableFuture.supplyAsync(
           { findPath0(ActivePathingContext(options, start, goal)) }, options.executor)
 
@@ -45,12 +45,12 @@ class Pathfinder(
       if (next.f <= bestNode.f) {
         bestNode = next
 
-        if (bestNode.depth >= options.maxLength) {
+        if (options.maxLength > 0 && bestNode.depth >= options.maxLength) {
           return PathSuccess(context, PathStatus.PARTIAL, bestNode.retracePath())
         }
       }
 
-      if (next.location == context.goal) {
+      if (next.position == context.goal) {
         return PathSuccess(context, PathStatus.COMPLETE, next.retracePath())
       }
 
@@ -76,28 +76,28 @@ class Pathfinder(
 
   private fun expandNode(context: ActivePathingContext, node: Node): Boolean {
     // TODO find fix for diagonal moves going through blocks
-    if (options.debugTime > 0) node.location.broadcastBlockChange(Material.GLOWSTONE)
-    Offset.diagonalOffsets.forEach { offset ->
-      if (examineNewLocation(context, node, node.location + offset) ===
+    if (options.debugTime > 0) node.position.broadcastBlockChange(Material.GLOWSTONE)
+    Offset.diagonal.forEach { offset ->
+      if (examineNewLocation(context, node, node.position + offset) ===
           ExaminationResult.CHUNK_EDGE) {
         return true
       }
     }
-    if (options.debugTime > 0) node.location.broadcastBlockChange(Material.GLASS)
+    if (options.debugTime > 0) node.position.broadcastBlockChange(Material.GLASS)
 
     return false
   }
 
   private fun examineNewLocation(
-      context: ActivePathingContext,
-      node: Node,
-      location: PathLocation
+    context: ActivePathingContext,
+    node: Node,
+    position: BlockPosition
   ): ExaminationResult {
-    if (location in context.examinedPositions) return ExaminationResult.INVALID
+    if (position in context.examinedPositions) return ExaminationResult.INVALID
 
-    if (location.isOutOfBounds()) return ExaminationResult.INVALID
+    if (position.isOutOfBounds()) return ExaminationResult.INVALID
 
-    val isBlockAvailable = accessor.isBlockAvailable(location)
+    val isBlockAvailable = accessor.isBlockAvailable(position)
 
     // If chunk loading is disabled and the option is on, the Pathfinder will attempt to find an
     // Path until the edge of available chunks and finish
@@ -105,41 +105,41 @@ class Pathfinder(
       return ExaminationResult.CHUNK_EDGE
     }
 
-    context.examinedPositions += location
+    context.examinedPositions += position
 
-    if (isBlockAvailable && options.pathingStrategy.isValid(accessor, node.parent, location)) {
+    if (isBlockAvailable && options.pathingStrategy.isValid(accessor, node.parent, position)) {
       context.frontier +=
           Node(
               context,
-              location,
-              options.pathingStrategy.getCost(accessor, node.parent, location) *
-                  node.location.octileDistance(location),
+              position,
+              options.pathingStrategy.getCost(accessor, node.parent, position) *
+                  node.position.octileDistance(position),
               node,
           )
       if (options.debugTime > 0) {
-        location.broadcastBlockChange(Material.LIME_STAINED_GLASS)
+        position.broadcastBlockChange(Material.LIME_STAINED_GLASS)
         Thread.sleep(options.debugTime)
       }
       return ExaminationResult.VALID
     }
     if (options.debugTime > 0) {
-      location.broadcastBlockChange(Material.PINK_STAINED_GLASS)
+      position.broadcastBlockChange(Material.PINK_STAINED_GLASS)
       Thread.sleep(options.debugTime)
     }
     return ExaminationResult.INVALID
   }
 
-  private fun PathLocation.broadcastBlockChange(material: Material) {
+  private fun BlockPosition.broadcastBlockChange(material: Material) {
     Bukkit.getOnlinePlayers().forEach { it.sendBlockChange(asBukkit(), material.createBlockData()) }
   }
 
   internal class ActivePathingContext(
-      val options: PathfinderOptions,
-      override val start: PathLocation,
-      override val goal: PathLocation,
+    val options: PathfinderOptions,
+    override val start: BlockPosition,
+    override val goal: BlockPosition,
   ) : PathingContext {
 
-    override val examinedPositions: MutableSet<PathLocation> = HashSet()
+    override val examinedPositions: MutableSet<BlockPosition> = HashSet()
     val frontier = PriorityQueue<Node>()
     override var iterations: Int = 0
   }

@@ -1,22 +1,22 @@
 package de.md5lukas.pathfinder
 
-import de.md5lukas.pathfinder.world.PathLocation
+import de.md5lukas.pathfinder.world.BlockPosition
 import kotlin.math.sign
 import org.bukkit.Location
 
 class Node
 internal constructor(
-    context: Pathfinder.ActivePathingContext,
-    val location: PathLocation,
-    cost: Double,
-    val parent: Node?
+  context: Pathfinder.ActivePathingContext,
+  val position: BlockPosition,
+  cost: Double,
+  val parent: Node?
 ) : Comparable<Node> {
 
   val depth: Int = (parent?.depth ?: 0) + 1
   private val g: Double = (parent?.g ?: 0.0) + cost
 
   private val h: Double =
-      location.octileDistance(context.goal) * context.options.heuristicWeight
+      position.octileDistance(context.goal) * context.options.heuristicWeight
 
   val f = g + h
 
@@ -27,7 +27,7 @@ internal constructor(
     val path = mutableListOf<Location>()
 
     while (current != null) {
-      path.add(current.location.asBukkit())
+      path.add(current.position.asBukkit())
       current = current.parent
     }
 

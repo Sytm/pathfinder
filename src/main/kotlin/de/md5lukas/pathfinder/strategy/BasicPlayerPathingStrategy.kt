@@ -2,7 +2,7 @@ package de.md5lukas.pathfinder.strategy
 
 import de.md5lukas.pathfinder.Node
 import de.md5lukas.pathfinder.world.BlockAccessor
-import de.md5lukas.pathfinder.world.PathLocation
+import de.md5lukas.pathfinder.world.BlockPosition
 import org.bukkit.Material
 
 class BasicPlayerPathingStrategy(
@@ -13,10 +13,10 @@ class BasicPlayerPathingStrategy(
   override fun isValid(
     accessor: BlockAccessor,
     previousNode: Node?,
-    location: PathLocation,
+    position: BlockPosition,
   ): Boolean {
-    if (!PathingStrategy.fitsPlayer(accessor, location)) return false
-    val ground = accessor.getBlock(location.plus(0, -1, 0))
+    if (!PathingStrategy.fitsPlayer(accessor, position)) return false
+    val ground = accessor.getBlock(position.plus(0, -1, 0))
     if (ground === null) return false
 
     return (allowSwimming && ground === Material.WATER) || PathingStrategy.isValidGround(ground)
@@ -25,10 +25,10 @@ class BasicPlayerPathingStrategy(
   override fun getCost(
     accessor: BlockAccessor,
     previousNode: Node?,
-    location: PathLocation,
+    position: BlockPosition,
   ): Double {
-    val baseCost = super.getCost(accessor, previousNode, location)
-    if (allowSwimming && accessor.getBlock(location.plus(0, -1, 0)) === Material.WATER) {
+    val baseCost = super.getCost(accessor, previousNode, position)
+    if (allowSwimming && accessor.getBlock(position.plus(0, -1, 0)) === Material.WATER) {
       return baseCost * swimmingPenalty
     }
     return baseCost

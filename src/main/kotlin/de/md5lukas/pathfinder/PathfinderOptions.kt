@@ -9,8 +9,8 @@ import org.bukkit.plugin.Plugin
 data class PathfinderOptions(
     val plugin: Plugin,
     val executor: Executor,
-    val maxLength: Int,
     val maxIterations: Int,
+    val maxLength: Int = 0,
     val pathingStrategy: PathingStrategy = BasicPlayerPathingStrategy(false, 1.0),
     val allowIncompletePathing: Boolean = true,
     val allowChunkLoading: Boolean = false,
@@ -18,6 +18,6 @@ data class PathfinderOptions(
     val partialPathOnUnloadedChunks: Boolean = true,
     val cacheRetention: Duration = Duration.ofMinutes(5),
     val setupChunkInvalidationListener: Boolean = false,
-    val debugTime: Long = 0,
     val heuristicWeight: Double = 1.0,
+    val debugTime: Long = 0,
 )

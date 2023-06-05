@@ -23,18 +23,18 @@ class BlockAccessor internal constructor(private val options: PathfinderOptions)
             })
   }
 
-  fun isBlockAvailable(location: PathLocation): Boolean {
-    return worlds[location.world.uid].asMap().containsKey(location.chunkKey) ||
-        canLoadChunk(location)
+  fun isBlockAvailable(position: BlockPosition): Boolean {
+    return worlds[position.world.uid].asMap().containsKey(position.chunkKey) ||
+        canLoadChunk(position)
   }
 
-  fun getBlock(location: PathLocation): Material? {
-    if (location.isOutOfBounds()) return Material.VOID_AIR
+  fun getBlock(position: BlockPosition): Material? {
+    if (position.isOutOfBounds()) return Material.VOID_AIR
 
-    return getChunkSnapshot(location)?.getBlockType(
-      location.chunkLocalX,
-      location.y,
-      location.chunkLocalZ,
+    return getChunkSnapshot(position)?.getBlockType(
+      position.chunkLocalX,
+      position.y,
+      position.chunkLocalZ,
     )
   }
 
@@ -42,25 +42,25 @@ class BlockAccessor internal constructor(private val options: PathfinderOptions)
     worlds.getIfPresent(world.uid)?.invalidate(chunkKey)
   }
 
-  private fun getChunkSnapshot(location: PathLocation): ChunkSnapshot? {
-    val worldCache = worlds[location.world.uid]
+  private fun getChunkSnapshot(position: BlockPosition): ChunkSnapshot? {
+    val worldCache = worlds[position.world.uid]
 
-    return if (canLoadChunk(location)) {
-      worldCache.get(location.chunkKey) {
-        location.world
-            .getChunkAtAsyncUrgently(location.chunkX, location.chunkZ)
+    return if (canLoadChunk(position)) {
+      worldCache.get(position.chunkKey) {
+        position.world
+            .getChunkAtAsyncUrgently(position.chunkX, position.chunkZ)
             .join()
             // Don't need height map
             .getChunkSnapshot(false, false, false)
       }
     } else {
-      worldCache.getIfPresent(location.chunkKey)
+      worldCache.getIfPresent(position.chunkKey)
     }
   }
 
-  private fun canLoadChunk(location: PathLocation) =
+  private fun canLoadChunk(position: BlockPosition) =
       (options.allowChunkLoading ||
-          location.world.isChunkLoaded(location.chunkX, location.chunkZ)) &&
+          position.world.isChunkLoaded(position.chunkX, position.chunkZ)) &&
           (options.allowChunkGeneration ||
-              location.world.isChunkGenerated(location.chunkX, location.chunkZ))
+              position.world.isChunkGenerated(position.chunkX, position.chunkZ))
 }

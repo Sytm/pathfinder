@@ -8,7 +8,7 @@ class Offset(
 
   companion object {
 
-    val diagonalOffsets: Array<Offset>
+    val diagonal: Array<Offset>
 
     init {
       val mutOffsets = mutableListOf<Offset>()
@@ -22,7 +22,7 @@ class Offset(
         }
       }
 
-      diagonalOffsets = mutOffsets.toTypedArray()
+      diagonal = mutOffsets.toTypedArray()
     }
   }
 
