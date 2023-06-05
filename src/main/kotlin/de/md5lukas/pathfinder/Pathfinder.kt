@@ -42,16 +42,16 @@ class Pathfinder(
     while (context.frontier.isNotEmpty() && ++context.iterations < options.maxIterations) {
       val next = context.frontier.poll()
 
+      if (next.position == context.goal) {
+        return PathSuccess(context, PathStatus.COMPLETE, next.retracePath())
+      }
+
       if (next.f <= bestNode.f) {
         bestNode = next
 
         if (options.maxLength > 0 && bestNode.depth >= options.maxLength) {
           return PathSuccess(context, PathStatus.PARTIAL, bestNode.retracePath())
         }
-      }
-
-      if (next.position == context.goal) {
-        return PathSuccess(context, PathStatus.COMPLETE, next.retracePath())
       }
 
       if (expandNode(context, next)) {
