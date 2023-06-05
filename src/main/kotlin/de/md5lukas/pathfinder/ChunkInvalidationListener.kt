@@ -9,7 +9,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 
 internal class ChunkInvalidationListener(
-  private val accessor: BlockAccessor,
+    private val accessor: BlockAccessor,
 ) : Listener {
 
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

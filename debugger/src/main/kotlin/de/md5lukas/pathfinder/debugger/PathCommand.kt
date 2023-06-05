@@ -17,22 +17,23 @@ import org.bukkit.plugin.Plugin
 import org.bukkit.util.StringUtil
 
 class PathCommand(
-  private val plugin: Debugger,
+    private val plugin: Debugger,
 ) : Command("path"), PluginIdentifiableCommand {
 
   override fun getPlugin(): Plugin = plugin
 
   private val pathfinder =
       Pathfinder(
-          PathfinderOptions(
-              plugin,
-              { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
-              5000,
-              setupChunkInvalidationListener = true,
-              heuristicWeight = 1.2,
-              debugTime = 0,
-              allowIncompletePathing = false,
-              pathingStrategy = BasicPlayerPathingStrategy(true, 5.0)),)
+              PathfinderOptions(
+                  { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
+                  5000,
+                  heuristicWeight = 1.2,
+                  debugTime = 0,
+                  allowIncompletePathing = false,
+                  pathingStrategy = BasicPlayerPathingStrategy(true, 5.0),
+              ),
+          )
+          .apply { registerInvalidationListener(plugin) }
 
   private val playerStates = mutableMapOf<UUID, PlayerState>()
 
@@ -50,7 +51,7 @@ class PathCommand(
         args.lastOrNull() ?: "",
         listOf("pos1", "pos2", "start", "exam"),
         mutableListOf(),
-      )
+    )
   }
 
   override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
@@ -99,7 +100,9 @@ class PathCommand(
                 sender.sendMultiBlockChange(map, true)
               }
               is PathFailure -> {
-                sender.sendMessage(Component.text("Pathing failed because ${it.reason}, iterations ${it.context.iterations}"))
+                sender.sendMessage(
+                    Component.text(
+                        "Pathing failed because ${it.reason}, iterations ${it.context.iterations}"))
               }
             }
           }

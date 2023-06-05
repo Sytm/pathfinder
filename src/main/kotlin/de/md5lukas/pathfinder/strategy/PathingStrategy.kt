@@ -18,7 +18,8 @@ interface PathingStrategy {
                 Material.FIRE,
                 Material.SOUL_FIRE,
                 Material.TRIPWIRE,
-                Material.SWEET_BERRY_BUSH,)
+                Material.SWEET_BERRY_BUSH,
+            )
             .toHashSet()
 
     fun fitsPlayer(accessor: BlockAccessor, position: BlockPosition): Boolean {
@@ -32,8 +33,7 @@ interface PathingStrategy {
           above !in disallowedNonCollidable
     }
 
-    fun isValidGround(material: Material) =
-       material.isSolid && material.isCollidable
+    fun isValidGround(material: Material) = material.isSolid && material.isCollidable
   }
 
   fun isValid(accessor: BlockAccessor, previousNode: Node?, position: BlockPosition): Boolean

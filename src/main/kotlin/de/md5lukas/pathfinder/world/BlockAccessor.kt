@@ -31,11 +31,12 @@ class BlockAccessor internal constructor(private val options: PathfinderOptions)
   fun getBlock(position: BlockPosition): Material? {
     if (position.isOutOfBounds()) return Material.VOID_AIR
 
-    return getChunkSnapshot(position)?.getBlockType(
-      position.chunkLocalX,
-      position.y,
-      position.chunkLocalZ,
-    )
+    return getChunkSnapshot(position)
+        ?.getBlockType(
+            position.chunkLocalX,
+            position.y,
+            position.chunkLocalZ,
+        )
   }
 
   fun invalidate(world: World, chunkKey: Long) {

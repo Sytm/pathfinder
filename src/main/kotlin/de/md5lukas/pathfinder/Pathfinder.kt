@@ -1,32 +1,38 @@
 package de.md5lukas.pathfinder
 
 import de.md5lukas.pathfinder.world.BlockAccessor
-import de.md5lukas.pathfinder.world.Offset
 import de.md5lukas.pathfinder.world.BlockPosition
+import de.md5lukas.pathfinder.world.Offset
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.event.HandlerList
+import org.bukkit.event.Listener
+import org.bukkit.plugin.Plugin
 
 class Pathfinder(
     private val options: PathfinderOptions,
 ) {
 
   private val accessor = BlockAccessor(options)
-  private val listener =
-      if (options.setupChunkInvalidationListener) {
-        ChunkInvalidationListener(accessor).also {
-          Bukkit.getPluginManager().registerEvents(it, options.plugin)
-        }
-      } else null
+  private var invalidationListener: Listener? = null
 
-  fun unregisterListener() {
-    listener?.let { HandlerList.unregisterAll(it) }
+  fun registerInvalidationListener(plugin: Plugin) {
+    invalidationListener =
+        ChunkInvalidationListener(accessor).also {
+          Bukkit.getPluginManager().registerEvents(it, plugin)
+        }
+    return
   }
 
-  fun findPath(start: Location, goal: Location) = findPath(BlockPosition(start), BlockPosition(goal))
+  fun unregisterListener() {
+    invalidationListener?.let { HandlerList.unregisterAll(it) }
+  }
+
+  fun findPath(start: Location, goal: Location) =
+      findPath(BlockPosition(start), BlockPosition(goal))
 
   fun findPath(start: BlockPosition, goal: BlockPosition): CompletableFuture<PathResult> =
       CompletableFuture.supplyAsync(
@@ -89,9 +95,9 @@ class Pathfinder(
   }
 
   private fun examineNewLocation(
-    context: ActivePathingContext,
-    node: Node,
-    position: BlockPosition
+      context: ActivePathingContext,
+      node: Node,
+      position: BlockPosition
   ): ExaminationResult {
     if (position in context.examinedPositions) return ExaminationResult.INVALID
 
@@ -134,9 +140,9 @@ class Pathfinder(
   }
 
   internal class ActivePathingContext(
-    val options: PathfinderOptions,
-    override val start: BlockPosition,
-    override val goal: BlockPosition,
+      val options: PathfinderOptions,
+      override val start: BlockPosition,
+      override val goal: BlockPosition,
   ) : PathingContext {
 
     override val examinedPositions: MutableSet<BlockPosition> = HashSet()

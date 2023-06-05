@@ -1,9 +1,9 @@
 package de.md5lukas.pathfinder.world
 
 class Offset(
-  val x: Int,
-  val y: Int,
-  val z: Int,
+    val x: Int,
+    val y: Int,
+    val z: Int,
 ) {
 
   companion object {

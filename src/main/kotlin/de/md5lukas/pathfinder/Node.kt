@@ -6,17 +6,16 @@ import org.bukkit.Location
 
 class Node
 internal constructor(
-  context: Pathfinder.ActivePathingContext,
-  val position: BlockPosition,
-  cost: Double,
-  val parent: Node?
+    context: Pathfinder.ActivePathingContext,
+    val position: BlockPosition,
+    cost: Double,
+    val parent: Node?
 ) : Comparable<Node> {
 
   val depth: Int = (parent?.depth ?: 0) + 1
   private val g: Double = (parent?.g ?: 0.0) + cost
 
-  private val h: Double =
-      position.octileDistance(context.goal) * context.options.heuristicWeight
+  private val h: Double = position.octileDistance(context.goal) * context.options.heuristicWeight
 
   val f = g + h
 
