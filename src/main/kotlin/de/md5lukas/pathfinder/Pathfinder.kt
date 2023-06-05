@@ -1,10 +1,14 @@
 package de.md5lukas.pathfinder
 
+import de.md5lukas.pathfinder.strategy.BasicPlayerPathingStrategy
+import de.md5lukas.pathfinder.strategy.PathingStrategy
 import de.md5lukas.pathfinder.world.BlockAccessor
 import de.md5lukas.pathfinder.world.BlockPosition
 import de.md5lukas.pathfinder.world.Offset
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
@@ -13,10 +17,20 @@ import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
 
 class Pathfinder(
-    private val options: PathfinderOptions,
+    private val executor: Executor,
+    private val maxIterations: Int,
+    private val maxLength: Int = 0,
+    private val pathingStrategy: PathingStrategy = BasicPlayerPathingStrategy(false, 1.0),
+    private val allowIncompletePathing: Boolean = true,
+    internal val allowChunkLoading: Boolean = false,
+    internal val allowChunkGeneration: Boolean = true,
+    private val partialPathOnUnloadedChunks: Boolean = true,
+    internal val cacheRetention: Duration = Duration.ofMinutes(5),
+    internal val heuristicWeight: Double = 1.0,
+    private val debugTime: Long = 0,
 ) {
 
-  private val accessor = BlockAccessor(options)
+  private val accessor = BlockAccessor(this)
   private var invalidationListener: Listener? = null
 
   fun registerInvalidationListener(plugin: Plugin) {
@@ -36,7 +50,7 @@ class Pathfinder(
 
   fun findPath(start: BlockPosition, goal: BlockPosition): CompletableFuture<PathResult> =
       CompletableFuture.supplyAsync(
-          { findPath0(ActivePathingContext(options, start, goal)) }, options.executor)
+          { findPath0(ActivePathingContext(this, start, goal)) }, executor)
 
   private fun findPath0(context: ActivePathingContext): PathResult {
     context.examinedPositions.add(context.start)
@@ -45,7 +59,7 @@ class Pathfinder(
 
     var bestNode = startNode
 
-    while (context.frontier.isNotEmpty() && ++context.iterations < options.maxIterations) {
+    while (context.frontier.isNotEmpty() && ++context.iterations < maxIterations) {
       val next = context.frontier.poll()
 
       if (next.position == context.goal) {
@@ -55,7 +69,7 @@ class Pathfinder(
       if (next.f <= bestNode.f) {
         bestNode = next
 
-        if (options.maxLength > 0 && bestNode.depth >= options.maxLength) {
+        if (maxLength > 0 && bestNode.depth >= maxLength) {
           return PathSuccess(context, PathStatus.PARTIAL, bestNode.retracePath())
         }
       }
@@ -65,7 +79,7 @@ class Pathfinder(
       }
     }
 
-    if (options.allowIncompletePathing) {
+    if (allowIncompletePathing) {
       return PathSuccess(context, PathStatus.INCOMPLETE, bestNode.retracePath())
     }
 
@@ -73,7 +87,7 @@ class Pathfinder(
         context,
         if (context.frontier.isEmpty()) {
           FailureReason.EXHAUSTED_OPTIONS
-        } else if (context.iterations >= options.maxIterations) {
+        } else if (context.iterations >= maxIterations) {
           FailureReason.MAX_ITERATIONS
         } else {
           FailureReason.UNKNOWN
@@ -82,14 +96,14 @@ class Pathfinder(
 
   private fun expandNode(context: ActivePathingContext, node: Node): Boolean {
     // TODO find fix for diagonal moves going through blocks
-    if (options.debugTime > 0) node.position.broadcastBlockChange(Material.GLOWSTONE)
+    if (debugTime > 0) node.position.broadcastBlockChange(Material.GLOWSTONE)
     Offset.diagonal.forEach { offset ->
       if (examineNewLocation(context, node, node.position + offset) ===
           ExaminationResult.CHUNK_EDGE) {
         return true
       }
     }
-    if (options.debugTime > 0) node.position.broadcastBlockChange(Material.GLASS)
+    if (debugTime > 0) node.position.broadcastBlockChange(Material.GLASS)
 
     return false
   }
@@ -107,30 +121,30 @@ class Pathfinder(
 
     // If chunk loading is disabled and the option is on, the Pathfinder will attempt to find an
     // Path until the edge of available chunks and finish
-    if (!isBlockAvailable && options.partialPathOnUnloadedChunks) {
+    if (!isBlockAvailable && partialPathOnUnloadedChunks) {
       return ExaminationResult.CHUNK_EDGE
     }
 
     context.examinedPositions += position
 
-    if (isBlockAvailable && options.pathingStrategy.isValid(accessor, node.parent, position)) {
+    if (isBlockAvailable && pathingStrategy.isValid(accessor, node.parent, position)) {
       context.frontier +=
           Node(
               context,
               position,
-              options.pathingStrategy.getCost(accessor, node.parent, position) *
+              pathingStrategy.getCost(accessor, node.parent, position) *
                   node.position.octileDistance(position),
               node,
           )
-      if (options.debugTime > 0) {
+      if (debugTime > 0) {
         position.broadcastBlockChange(Material.LIME_STAINED_GLASS)
-        Thread.sleep(options.debugTime)
+        Thread.sleep(debugTime)
       }
       return ExaminationResult.VALID
     }
-    if (options.debugTime > 0) {
+    if (debugTime > 0) {
       position.broadcastBlockChange(Material.PINK_STAINED_GLASS)
-      Thread.sleep(options.debugTime)
+      Thread.sleep(debugTime)
     }
     return ExaminationResult.INVALID
   }
@@ -140,7 +154,7 @@ class Pathfinder(
   }
 
   internal class ActivePathingContext(
-      val options: PathfinderOptions,
+      val pathfinder: Pathfinder,
       override val start: BlockPosition,
       override val goal: BlockPosition,
   ) : PathingContext {

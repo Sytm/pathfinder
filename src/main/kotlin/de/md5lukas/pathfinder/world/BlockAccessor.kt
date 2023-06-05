@@ -4,18 +4,18 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import de.md5lukas.pathfinder.PathfinderOptions
+import de.md5lukas.pathfinder.Pathfinder
 import java.util.*
 import org.bukkit.ChunkSnapshot
 import org.bukkit.Material
 import org.bukkit.World
 
-class BlockAccessor internal constructor(private val options: PathfinderOptions) {
+class BlockAccessor internal constructor(private val pathfinder: Pathfinder) {
 
   private val worlds: LoadingCache<UUID, Cache<Long, ChunkSnapshot>>
 
   init {
-    val cacheBuilder = CacheBuilder.newBuilder().expireAfterAccess(options.cacheRetention)
+    val cacheBuilder = CacheBuilder.newBuilder().expireAfterAccess(pathfinder.cacheRetention)
     worlds =
         cacheBuilder.build(
             object : CacheLoader<UUID, Cache<Long, ChunkSnapshot>>() {
@@ -60,8 +60,8 @@ class BlockAccessor internal constructor(private val options: PathfinderOptions)
   }
 
   private fun canLoadChunk(position: BlockPosition) =
-      (options.allowChunkLoading ||
+      (pathfinder.allowChunkLoading ||
           position.world.isChunkLoaded(position.chunkX, position.chunkZ)) &&
-          (options.allowChunkGeneration ||
+          (pathfinder.allowChunkGeneration ||
               position.world.isChunkGenerated(position.chunkX, position.chunkZ))
 }

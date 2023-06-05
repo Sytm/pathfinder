@@ -15,7 +15,7 @@ internal constructor(
   val depth: Int = (parent?.depth ?: 0) + 1
   private val g: Double = (parent?.g ?: 0.0) + cost
 
-  private val h: Double = position.octileDistance(context.goal) * context.options.heuristicWeight
+  private val h: Double = position.octileDistance(context.goal) * context.pathfinder.heuristicWeight
 
   val f = g + h
 

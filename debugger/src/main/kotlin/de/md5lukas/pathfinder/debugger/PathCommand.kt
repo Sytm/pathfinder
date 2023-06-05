@@ -24,14 +24,12 @@ class PathCommand(
 
   private val pathfinder =
       Pathfinder(
-              PathfinderOptions(
-                  { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
-                  5000,
-                  heuristicWeight = 1.2,
-                  debugTime = 0,
-                  allowIncompletePathing = false,
-                  pathingStrategy = BasicPlayerPathingStrategy(true, 5.0),
-              ),
+              { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
+              5000,
+              heuristicWeight = 1.2,
+              debugTime = 0,
+              allowIncompletePathing = false,
+              pathingStrategy = BasicPlayerPathingStrategy(true, 5.0),
           )
           .apply { registerInvalidationListener(plugin) }
 
