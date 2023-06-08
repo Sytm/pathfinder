@@ -1,7 +1,9 @@
 package de.md5lukas.pathfinder
 
-import de.md5lukas.pathfinder.strategy.BasicPlayerPathingStrategy
-import de.md5lukas.pathfinder.strategy.PathingStrategy
+import de.md5lukas.pathfinder.behaviour.BasicPlayerPathingStrategy
+import de.md5lukas.pathfinder.behaviour.ConstantFWeigher
+import de.md5lukas.pathfinder.behaviour.FWeigher
+import de.md5lukas.pathfinder.behaviour.PathingStrategy
 import de.md5lukas.pathfinder.world.BlockAccessor
 import de.md5lukas.pathfinder.world.BlockPosition
 import de.md5lukas.pathfinder.world.Offset
@@ -17,6 +19,7 @@ import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
 
 class Pathfinder(
+    private val plugin: Plugin,
     private val executor: Executor,
     private val maxIterations: Int,
     private val maxLength: Int = 0,
@@ -26,19 +29,18 @@ class Pathfinder(
     internal val allowChunkGeneration: Boolean = true,
     private val partialPathOnUnloadedChunks: Boolean = true,
     internal val cacheRetention: Duration = Duration.ofMinutes(5),
-    internal val heuristicWeight: Double = 1.0,
+    internal val weigher: FWeigher = ConstantFWeigher(),
     private val debugTime: Long = 0,
 ) {
 
   private val accessor = BlockAccessor(this)
   private var invalidationListener: Listener? = null
 
-  fun registerInvalidationListener(plugin: Plugin) {
+  fun registerInvalidationListener() {
     invalidationListener =
         ChunkInvalidationListener(accessor).also {
           Bukkit.getPluginManager().registerEvents(it, plugin)
         }
-    return
   }
 
   fun unregisterListener() {
@@ -49,8 +51,7 @@ class Pathfinder(
       findPath(BlockPosition(start), BlockPosition(goal))
 
   fun findPath(start: BlockPosition, goal: BlockPosition): CompletableFuture<PathResult> =
-      CompletableFuture.supplyAsync(
-          { findPath0(ActivePathingContext(this, start, goal)) }, executor)
+      CompletableFuture.supplyAsync({ findPath0(ActivePathingContext(start, goal)) }, executor)
 
   private fun findPath0(context: ActivePathingContext): PathResult {
     context.examinedPositions.add(context.start)
@@ -60,6 +61,10 @@ class Pathfinder(
     var bestNode = startNode
 
     while (context.frontier.isNotEmpty() && ++context.iterations < maxIterations) {
+      if (!plugin.isEnabled) {
+        return PathFailure(context, FailureReason.PLUGIN_DISABLED)
+      }
+
       val next = context.frontier.poll()
 
       if (next.position == context.goal) {
@@ -153,15 +158,21 @@ class Pathfinder(
     Bukkit.getOnlinePlayers().forEach { it.sendBlockChange(asBukkit(), material.createBlockData()) }
   }
 
-  internal class ActivePathingContext(
-      val pathfinder: Pathfinder,
+  internal inner class ActivePathingContext(
       override val start: BlockPosition,
       override val goal: BlockPosition,
   ) : PathingContext {
 
+    val pathfinder
+      get() = this@Pathfinder
+
     override val examinedPositions: MutableSet<BlockPosition> = HashSet()
     val frontier = PriorityQueue<Node>()
     override var iterations: Int = 0
+
+    override fun toString(): String {
+      return "ActivePathingContext(start=$start, goal=$goal, examinedPositionsN=${examinedPositions.size}, frontierN=${frontier.size}, iterations=$iterations)"
+    }
   }
 
   private enum class ExaminationResult {

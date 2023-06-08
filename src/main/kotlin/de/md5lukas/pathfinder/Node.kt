@@ -13,11 +13,12 @@ internal constructor(
 ) : Comparable<Node> {
 
   val depth: Int = (parent?.depth ?: 0) + 1
+
   private val g: Double = (parent?.g ?: 0.0) + cost
 
-  private val h: Double = position.octileDistance(context.goal) * context.pathfinder.heuristicWeight
+  private val h: Double = position.octileDistance(context.goal)
 
-  val f = g + h
+  val f = context.pathfinder.weigher.calculateF(context, position, g, h)
 
   override fun compareTo(other: Node): Int = (f - other.f).sign.toInt()
 

@@ -1,4 +1,4 @@
-package de.md5lukas.pathfinder.strategy
+package de.md5lukas.pathfinder.behaviour
 
 import de.md5lukas.pathfinder.Node
 import de.md5lukas.pathfinder.world.BlockAccessor
@@ -6,8 +6,8 @@ import de.md5lukas.pathfinder.world.BlockPosition
 import org.bukkit.Material
 
 class BasicPlayerPathingStrategy(
-    private val allowSwimming: Boolean,
-    private val swimmingPenalty: Double
+    private var allowSwimming: Boolean,
+    private var swimmingPenalty: Double
 ) : PathingStrategy {
 
   override fun isValid(

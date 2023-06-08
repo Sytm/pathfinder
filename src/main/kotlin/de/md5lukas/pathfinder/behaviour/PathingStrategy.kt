@@ -1,4 +1,4 @@
-package de.md5lukas.pathfinder.strategy
+package de.md5lukas.pathfinder.behaviour
 
 import de.md5lukas.pathfinder.Node
 import de.md5lukas.pathfinder.world.BlockAccessor

@@ -1,7 +1,8 @@
 package de.md5lukas.pathfinder.debugger
 
 import de.md5lukas.pathfinder.*
-import de.md5lukas.pathfinder.strategy.BasicPlayerPathingStrategy
+import de.md5lukas.pathfinder.behaviour.BasicPlayerPathingStrategy
+import de.md5lukas.pathfinder.behaviour.ConstantFWeigher
 import de.md5lukas.pathfinder.world.BlockPosition
 import io.papermc.paper.math.Position
 import java.util.*
@@ -24,14 +25,15 @@ class PathCommand(
 
   private val pathfinder =
       Pathfinder(
+              plugin,
               { Bukkit.getScheduler().runTaskAsynchronously(plugin, it) },
               5000,
-              heuristicWeight = 1.2,
+              weigher = ConstantFWeigher(1.2),
               debugTime = 0,
               allowIncompletePathing = false,
               pathingStrategy = BasicPlayerPathingStrategy(true, 5.0),
           )
-          .apply { registerInvalidationListener(plugin) }
+          .apply { registerInvalidationListener() }
 
   private val playerStates = mutableMapOf<UUID, PlayerState>()
 

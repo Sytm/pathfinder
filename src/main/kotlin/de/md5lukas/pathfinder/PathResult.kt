@@ -8,11 +8,17 @@ class PathFailure
 internal constructor(
     context: PathingContext,
     val reason: FailureReason,
-) : PathResult(context)
+) : PathResult(context) {
+
+  override fun toString(): String {
+    return "PathFailure(context=$context, reason=$reason)"
+  }
+}
 
 enum class FailureReason {
   EXHAUSTED_OPTIONS,
   MAX_ITERATIONS,
+  PLUGIN_DISABLED,
   UNKNOWN,
 }
 
@@ -21,7 +27,11 @@ internal constructor(
     context: PathingContext,
     val status: PathStatus,
     val path: List<Location>,
-) : PathResult(context)
+) : PathResult(context) {
+  override fun toString(): String {
+    return "PathSuccess(context=$context, status=$status, pathN=${path.size})"
+  }
+}
 
 enum class PathStatus {
   COMPLETE,

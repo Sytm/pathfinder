@@ -33,6 +33,12 @@ spotless {
   }
 }
 
+val sourcesJar by
+    tasks.creating(Jar::class) {
+      archiveClassifier.set("sources")
+      from(sourceSets.main.get().allSource)
+    }
+
 publishing {
   repositories {
     maven {
@@ -52,5 +58,10 @@ publishing {
       authentication { create<BasicAuthentication>("basic") }
     }
   }
-  publications { create<MavenPublication>("maven") { from(components["java"]) } }
+  publications { 
+    create<MavenPublication>("maven") { 
+      from(components["java"]) 
+      artifact(sourcesJar)
+    } 
+  }
 }
